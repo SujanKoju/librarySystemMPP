@@ -1,2 +1,0 @@
-# librarySystemMPP
-library management system
