@@ -35,11 +35,14 @@ public class DataAccessFacade implements DataAccess {
         checkoutMap.put(checkout.getId(), checkout);
         saveToStorage(StorageType.CHECKOUTS, checkoutMap);
     }
-
+    @Override
+    public void saveBook(Book book) {
+        HashMap<String, Book> bookHashMap = readBooksMap();
+        bookHashMap.put(book.getIsbn(), book);
+        saveToStorage(StorageType.BOOKS, bookHashMap);
+    }
     @SuppressWarnings("unchecked")
     public HashMap<String, Book> readBooksMap() {
-        //Returns a Map with name/value pairs being
-        //   isbn -> Book
         return (HashMap<String, Book>) readFromStorage(StorageType.BOOKS);
     }
 
@@ -53,6 +56,8 @@ public class DataAccessFacade implements DataAccess {
     public HashMap<String, Checkout> readCheckOutMap() {
         return (HashMap<String, Checkout>) readFromStorage(StorageType.CHECKOUTS);
     }
+
+
 
     @SuppressWarnings("unchecked")
     public HashMap<String, User> readUserMap() {

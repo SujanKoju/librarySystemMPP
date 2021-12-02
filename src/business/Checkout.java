@@ -62,4 +62,16 @@ public class Checkout implements Serializable {
     public void setDueDate(LocalDate dueDate) {
         this.dueDate = dueDate;
     }
+
+    @Override
+    public String toString() {
+        return "Checkout{" +
+                "id='" + id + '\'' +
+                ", code='" + code + '\'' +
+                ", member=" + member +
+                ", bookCopy=" + bookCopy +
+                ", checkoutDate=" + checkoutDate +
+                ", dueDate=" + dueDate +
+                '}';
+    }
 }

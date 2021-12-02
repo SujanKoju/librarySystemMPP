@@ -1,4 +1,4 @@
-package ui;
+package ui.checkout;
 
 import business.*;
 import dataaccess.DataAccess;
@@ -12,7 +12,9 @@ import javafx.scene.control.cell.PropertyValueFactory;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author kojusujan1111@gmail.com 01/12/21
@@ -40,22 +42,37 @@ public class CheckoutController {
     @FXML
     Alert infoAlert = new Alert(Alert.AlertType.INFORMATION);
 
+    public DataAccessFacade dataAccessFacade;
+
     List<BookCopy> bookCopyList;
     LibraryMember libraryMember;
 
     public CheckoutController() {
         bookCopyList = new ArrayList<>();
+        dataAccessFacade = new DataAccessFacade();
     }
 
     public void addBook() {
         if (validationError()) return;
-        BookCopy bookCopy = getAvailableBookCopyWithIsbn(isbnTextBox.getText());
-        this.libraryMember = getMemberWithId(memberIdTextBox.getText());
+
+        Optional<BookCopy> bookCopy = getAvailableBookCopyWithIsbn(isbnTextBox.getText());
+        if (!bookCopy.isPresent()) {
+            showErrorAlert("Book Not found or all copies are unavailable");
+            return;
+        }
+
+        Optional<LibraryMember> memberWithId = getMemberWithId(memberIdTextBox.getText());
+        if (!memberWithId.isPresent()) {
+            showErrorAlert("Member with given id not found.");
+            return;
+        }
+
+        this.libraryMember = memberWithId.get();
         isbnTextBox.setText("");
         copyNumberColumn.setCellValueFactory(new PropertyValueFactory("copyNum"));
         isbnColumn.setCellValueFactory(cellData -> new ReadOnlyStringWrapper(cellData.getValue().getBook().getIsbn()));
         titleColumn.setCellValueFactory(cellData -> new ReadOnlyStringWrapper(cellData.getValue().getBook().getTitle()));
-        selectedBookTable.setItems(addBookToSelectedBookTable(bookCopy));
+        selectedBookTable.setItems(addBookToSelectedBookTable(bookCopy.get()));
         showInfoAlert("Book Added Success");
         memberIdTextBox.setEditable(false);
     }
@@ -81,16 +98,21 @@ public class CheckoutController {
     }
 
 
-    private LibraryMember getMemberWithId(String id) {
-        //TODO IMPLEMENT
-        return new LibraryMember("suj-123", "sujan", "koju", "645241",
-                new Address("100", "fairfield", "iowa", "5227"));
+    private Optional<LibraryMember> getMemberWithId(String id) {
+        HashMap<String, LibraryMember> memberHashMap = dataAccessFacade.readMemberMap();
+        if (!memberHashMap.containsKey(id)) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(memberHashMap.get(id));
     }
 
-    private BookCopy getAvailableBookCopyWithIsbn(String isbn) {
-        //TODO IMPLEMENT
-        Book b = new Book(isbn, "java", 7, new ArrayList<>());
-        return b.getCopies()[0];
+    private Optional<BookCopy> getAvailableBookCopyWithIsbn(String isbn) {
+        HashMap<String, Book> bookHashMap = dataAccessFacade.readBooksMap();
+        if (!bookHashMap.containsKey(isbn)) return Optional.empty();
+        Book book = bookHashMap.get(isbn);
+        BookCopy nextAvailableCopy = book.getNextAvailableCopy();
+        if (nextAvailableCopy == null) return Optional.empty();
+        return Optional.of(nextAvailableCopy);
     }
 
     public void checkOut() {
@@ -100,10 +122,21 @@ public class CheckoutController {
         bookCopyList.forEach(bookCopy -> {
             String code = HelperUtils.generateUUID();
             dataAccess.saveCheckOut(prepareCheckOutEntity(libraryMember, bookCopy, code));
+            updateBookCopyToUnavailable(dataAccess, bookCopy);
         });
         showInfoAlert("Checkout Success");
         resetForm();
-        System.out.println("Sadsa");
+
+    }
+
+    private void updateBookCopyToUnavailable(DataAccess dataAccess, BookCopy bookCopy) {
+        Book book = bookCopy.getBook();
+        for (BookCopy copy : book.getCopies()) {
+            if (copy.getCopyNum() == bookCopy.getCopyNum()) {
+                copy.changeAvailability();
+            }
+        }
+        dataAccess.saveBook(book);
     }
 
     private Checkout prepareCheckOutEntity(LibraryMember libraryMember, BookCopy bookCopy, String code) {

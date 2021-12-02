@@ -24,7 +24,15 @@ public class TestData {
         td.bookData();
         td.libraryMemberData();
         td.userData();
+        DataAccessFacade.loadCheckoutMap(Collections.singletonList(prepareDummyCheckOut()));
+        DataAccess da = new DataAccessFacade();
+        System.out.println("BOOKS: "+da.readBooksMap());
+        System.out.println("USERS: "+da.readUserMap());
+        System.out.println("MEMBERS: "+da.readMemberMap());
+        System.out.println("CHECKOUTS: "+da.readCheckOutMap());
+    }
 
+    public static Checkout prepareDummyCheckOut() {
         Book book = new Book("23-11451", "The Big Fish", 21, new ArrayList<>());
         BookCopy bookCopy = book.getCopy(1);
         LibraryMember libraryMember = new LibraryMember("1001", "Andy", "Rogers", "641-223-2211",
@@ -36,11 +44,7 @@ public class TestData {
         checkout.setMember(libraryMember);
         checkout.setCheckoutDate(LocalDate.now());
         checkout.setDueDate(LocalDate.now().plusDays(bookCopy.getBook().getMaxCheckoutLength()));
-        DataAccessFacade.loadCheckoutMap(Collections.singletonList(checkout));
-
-        DataAccess da = new DataAccessFacade();
-        System.out.println(da.readBooksMap());
-        System.out.println(da.readUserMap());
+        return checkout;
     }
 
     ///create books

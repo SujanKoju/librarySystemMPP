@@ -38,7 +38,16 @@ final public class BookCopy implements Serializable {
 	public void changeAvailability() {
 		isAvailable = !isAvailable;
 	}
-	
+
+	@Override
+	public String toString() {
+		return "BookCopy{" +
+				"book=" + book +
+				", copyNum=" + copyNum +
+				", isAvailable=" + isAvailable +
+				'}';
+	}
+
 	@Override
 	public boolean equals(Object ob) {
 		if(ob == null) return false;
