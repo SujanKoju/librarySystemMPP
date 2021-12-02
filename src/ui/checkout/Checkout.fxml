@@ -34,7 +34,8 @@
                 <TableColumn fx:id="copyNumberColumn" prefWidth="132.0" text="Copy Number" />
             </columns>
         </TableView>
-        <Button fx:id="checkOutButton" layoutX="637.0" layoutY="457.0" mnemonicParsing="false" onAction="#checkOut" prefHeight="56.0" prefWidth="146.0" text="Checkout" />
+        <Button fx:id="checkOutButton" layoutX="637.0" layoutY="467.0" mnemonicParsing="false" onAction="#checkOut" prefHeight="56.0" prefWidth="146.0" text="Checkout" />
       <Button fx:id="cancelButton" layoutX="252.0" layoutY="467.0" mnemonicParsing="false" onAction="#cancel" prefHeight="56.0" prefWidth="146.0" text="Cancel" />
+      <Button fx:id="viewCheckoutButton" layoutX="710.0" layoutY="22.0" mnemonicParsing="false" onAction="#viewCheckouts" prefHeight="56.0" prefWidth="179.0" text="View Checkouts" />
     </children>
 </AnchorPane>

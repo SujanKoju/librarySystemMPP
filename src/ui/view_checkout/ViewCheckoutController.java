@@ -36,12 +36,11 @@ public class ViewCheckoutController {
     @FXML
     public TableColumn<Checkout, String> bookTitleColumn = new TableColumn<>();
     @FXML
-    public TableColumn<Checkout, Integer> copyNumberColumn = new TableColumn<>();
-    @FXML
     public TableColumn<Checkout, LocalDate> checkOutDateColumn = new TableColumn<>();
     @FXML
     public TableColumn<Checkout, LocalDate> dueDateColumn = new TableColumn<>();
     List<Checkout> checkoutList;
+    public DataAccessFacade dataAccess = new DataAccessFacade();
 
     public ViewCheckoutController() {
         this.checkoutList = new ArrayList<>();
@@ -59,8 +58,7 @@ public class ViewCheckoutController {
 
     private ObservableList<Checkout> getCheckOutOfTheMember(String memberId) {
         this.checkoutList.clear();
-        DataAccessFacade dataAccessFacade = new DataAccessFacade();
-        HashMap<String, Checkout> checkoutHashMap = dataAccessFacade.readCheckOutMap();
+        HashMap<String, Checkout> checkoutHashMap = this.dataAccess.readCheckOutMap();
         checkoutHashMap.forEach((s, checkout) -> {
             if (checkout.getMember().getMemberId().equalsIgnoreCase(memberId)) {
                 this.checkoutList.add(checkout);
@@ -71,15 +69,15 @@ public class ViewCheckoutController {
 
     public void print() {
         if (this.checkoutList.size() != 0) {
-            System.out.println("------ CHECKOUTS -----");
-            this.checkoutList.forEach(checkout -> {
-                System.out.println("Book : " + checkout.getBookCopy().getBook().getTitle());
-                System.out.println("Copy no : " + checkout.getBookCopy().getCopyNum());
-                System.out.println("Checkout Date : " + checkout.getCheckoutDate());
-                System.out.println("Due date : " + checkout.getDueDate());
-                System.out.println("----------------------");
-            });
-
+            System.out.println("------ Checkouts of " + checkoutList.get(0).getMember().getFirstName() + "-----");
+            for (int i = 0; i <checkoutList.size(); i++) {
+                System.out.println(i+1);
+                System.out.println("Book : " + checkoutList.get(i).getBookCopy().getBook().getTitle());
+                System.out.println("Copy no : " + checkoutList.get(i).getBookCopy().getCopyNum());
+                System.out.println("Checkout Date : " + checkoutList.get(i).getCheckoutDate());
+                System.out.println("Due date : " + checkoutList.get(i).getDueDate());
+                System.out.println("-------------------------------");
+            }
         }
 
     }

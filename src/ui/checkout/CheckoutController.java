@@ -1,15 +1,19 @@
 package ui.checkout;
 
 import business.*;
-import dataaccess.DataAccess;
 import dataaccess.DataAccessFacade;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.stage.Stage;
+import ui.view_checkout.ViewCheckoutController;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,19 +42,22 @@ public class CheckoutController {
     @FXML
     public TableColumn<BookCopy, Integer> copyNumberColumn = new TableColumn<>();
     @FXML
+    public Button viewCheckoutButton;
+    @FXML
     Alert errorAlert = new Alert(Alert.AlertType.ERROR);
     @FXML
     Alert infoAlert = new Alert(Alert.AlertType.INFORMATION);
 
-    public DataAccessFacade dataAccessFacade;
+    public DataAccessFacade dataAccess =new DataAccessFacade();
 
     List<BookCopy> bookCopyList;
     LibraryMember libraryMember;
 
     public CheckoutController() {
         bookCopyList = new ArrayList<>();
-        dataAccessFacade = new DataAccessFacade();
     }
+
+
 
     public void addBook() {
         if (validationError()) return;
@@ -99,7 +106,7 @@ public class CheckoutController {
 
 
     private Optional<LibraryMember> getMemberWithId(String id) {
-        HashMap<String, LibraryMember> memberHashMap = dataAccessFacade.readMemberMap();
+        HashMap<String, LibraryMember> memberHashMap = dataAccess.readMemberMap();
         if (!memberHashMap.containsKey(id)) {
             return Optional.empty();
         }
@@ -107,7 +114,7 @@ public class CheckoutController {
     }
 
     private Optional<BookCopy> getAvailableBookCopyWithIsbn(String isbn) {
-        HashMap<String, Book> bookHashMap = dataAccessFacade.readBooksMap();
+        HashMap<String, Book> bookHashMap = dataAccess.readBooksMap();
         if (!bookHashMap.containsKey(isbn)) return Optional.empty();
         Book book = bookHashMap.get(isbn);
         BookCopy nextAvailableCopy = book.getNextAvailableCopy();
@@ -116,27 +123,27 @@ public class CheckoutController {
     }
 
     public void checkOut() {
-        DataAccess dataAccess = new DataAccessFacade();
-        LibraryMember libraryMember = this.libraryMember;
-        List<BookCopy> bookCopyList = this.bookCopyList;
-        bookCopyList.forEach(bookCopy -> {
-            String code = HelperUtils.generateUUID();
-            dataAccess.saveCheckOut(prepareCheckOutEntity(libraryMember, bookCopy, code));
-            updateBookCopyToUnavailable(dataAccess, bookCopy);
-        });
-        showInfoAlert("Checkout Success");
-        resetForm();
-
+        if (bookCopyList.size()>0){
+            LibraryMember libraryMember = this.libraryMember;
+            List<BookCopy> bookCopyList = this.bookCopyList;
+            bookCopyList.forEach(bookCopy -> {
+                String code = HelperUtils.generateUUID();
+                this.dataAccess.saveCheckOut(prepareCheckOutEntity(libraryMember, bookCopy, code));
+                updateBookCopyToUnavailable(bookCopy);
+            });
+            showInfoAlert("Checkout Success");
+            resetForm();
+        }
     }
 
-    private void updateBookCopyToUnavailable(DataAccess dataAccess, BookCopy bookCopy) {
+    private void updateBookCopyToUnavailable(BookCopy bookCopy) {
         Book book = bookCopy.getBook();
         for (BookCopy copy : book.getCopies()) {
             if (copy.getCopyNum() == bookCopy.getCopyNum()) {
                 copy.changeAvailability();
             }
         }
-        dataAccess.saveBook(book);
+        this.dataAccess.saveBook(book);
     }
 
     private Checkout prepareCheckOutEntity(LibraryMember libraryMember, BookCopy bookCopy, String code) {
@@ -187,5 +194,16 @@ public class CheckoutController {
         this.libraryMember = null;
         this.memberIdTextBox.setEditable(true);
         selectedBookTable.getItems().clear();
+    }
+
+    public void viewCheckouts() throws IOException {
+        Stage stage = (Stage) viewCheckoutButton.getScene().getWindow();
+        stage.close();
+        Stage viewCheckoutStage =new Stage();
+        FXMLLoader fxmlLoader = new FXMLLoader(ViewCheckoutController.class.getResource("view_checkout.fxml"));
+        Scene scene = new Scene(fxmlLoader.load(), 1000, 800);
+        viewCheckoutStage.setTitle("View Checkout");
+        viewCheckoutStage.setScene(scene);
+        viewCheckoutStage.show();
     }
 }
