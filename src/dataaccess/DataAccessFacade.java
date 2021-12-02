@@ -11,6 +11,7 @@ import java.util.List;
 
 import business.Book;
 import business.BookCopy;
+import business.Checkout;
 import business.LibraryMember;
 import dataaccess.DataAccessFacade.StorageType;
 
@@ -18,7 +19,7 @@ import dataaccess.DataAccessFacade.StorageType;
 public class DataAccessFacade implements DataAccess {
 	
 	enum StorageType {
-		BOOKS, MEMBERS, USERS;
+		BOOKS, MEMBERS, USERS, CHECKOUTS;
 	}
 	
 	public static final String OUTPUT_DIR = System.getProperty("user.dir") 
@@ -32,7 +33,15 @@ public class DataAccessFacade implements DataAccess {
 		mems.put(memberId, member);
 		saveToStorage(StorageType.MEMBERS, mems);	
 	}
-	
+
+	@Override
+	public void saveCheckOut(Checkout checkout) {
+		HashMap<String, Checkout> checkoutMap = readCheckOutMap();
+		String checkId = checkout.getId();
+		checkoutMap.put(checkId, checkout);
+		saveToStorage(StorageType.MEMBERS, checkoutMap);
+	}
+
 	@SuppressWarnings("unchecked")
 	public  HashMap<String,Book> readBooksMap() {
 		//Returns a Map with name/value pairs being
@@ -47,7 +56,12 @@ public class DataAccessFacade implements DataAccess {
 		return (HashMap<String, LibraryMember>) readFromStorage(
 				StorageType.MEMBERS);
 	}
-	
+	public HashMap<String, Checkout> readCheckOutMap() {
+		//Returns a Map with name/value pairs being
+		//   memberId -> LibraryMember
+		return (HashMap<String, Checkout>) readFromStorage(
+				StorageType.CHECKOUTS);
+	}
 	
 	@SuppressWarnings("unchecked")
 	public HashMap<String, User> readUserMap() {
@@ -90,7 +104,7 @@ public class DataAccessFacade implements DataAccess {
 			if(out != null) {
 				try {
 					out.close();
-				} catch(Exception e) {}
+				} catch(Exception ignored) {}
 			}
 		}
 	}
