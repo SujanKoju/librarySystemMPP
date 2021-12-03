@@ -48,7 +48,7 @@ public class CheckoutController {
     @FXML
     Alert infoAlert = new Alert(Alert.AlertType.INFORMATION);
 
-    public DataAccessFacade dataAccess =new DataAccessFacade();
+    public DataAccessFacade dataAccess = new DataAccessFacade();
 
     List<BookCopy> bookCopyList;
     LibraryMember libraryMember;
@@ -58,10 +58,8 @@ public class CheckoutController {
     }
 
 
-
     public void addBook() {
         if (validationError()) return;
-
         Optional<BookCopy> bookCopy = getAvailableBookCopyWithIsbn(isbnTextBox.getText());
         if (!bookCopy.isPresent()) {
             showErrorAlert("Book Not found or all copies are unavailable");
@@ -80,6 +78,9 @@ public class CheckoutController {
         isbnColumn.setCellValueFactory(cellData -> new ReadOnlyStringWrapper(cellData.getValue().getBook().getIsbn()));
         titleColumn.setCellValueFactory(cellData -> new ReadOnlyStringWrapper(cellData.getValue().getBook().getTitle()));
         selectedBookTable.setItems(addBookToSelectedBookTable(bookCopy.get()));
+
+
+
         showInfoAlert("Book Added Success");
         memberIdTextBox.setEditable(false);
     }
@@ -117,13 +118,21 @@ public class CheckoutController {
         HashMap<String, Book> bookHashMap = dataAccess.readBooksMap();
         if (!bookHashMap.containsKey(isbn)) return Optional.empty();
         Book book = bookHashMap.get(isbn);
-        BookCopy nextAvailableCopy = book.getNextAvailableCopy();
+        BookCopy nextAvailableCopy = book.getNextAvailableCopy(prepareAlreadyAddedBookCopyOfIsbn(isbn, bookCopyList));
         if (nextAvailableCopy == null) return Optional.empty();
         return Optional.of(nextAvailableCopy);
     }
 
+    private HashMap<Integer, Boolean> prepareAlreadyAddedBookCopyOfIsbn(String isbn, List<BookCopy> bookCopyList) {
+        HashMap<Integer, Boolean> map = new HashMap<>();
+        bookCopyList.forEach(bookCopy -> {
+            if (bookCopy.getBook().getIsbn().equalsIgnoreCase(isbn)) map.put(bookCopy.getCopyNum(), true);
+        });
+        return map;
+    }
+
     public void checkOut() {
-        if (bookCopyList.size()>0){
+        if (bookCopyList.size() > 0) {
             LibraryMember libraryMember = this.libraryMember;
             List<BookCopy> bookCopyList = this.bookCopyList;
             bookCopyList.forEach(bookCopy -> {
@@ -137,7 +146,7 @@ public class CheckoutController {
     }
 
     private void updateBookCopyToUnavailable(BookCopy bookCopy) {
-        Book book = bookCopy.getBook();
+        Book book = dataAccess.getBookWithGivenIsbn(bookCopy.getBook().getIsbn()).get();
         for (BookCopy copy : book.getCopies()) {
             if (copy.getCopyNum() == bookCopy.getCopyNum()) {
                 copy.changeAvailability();
@@ -199,7 +208,7 @@ public class CheckoutController {
     public void viewCheckouts() throws IOException {
         Stage stage = (Stage) viewCheckoutButton.getScene().getWindow();
         stage.close();
-        Stage viewCheckoutStage =new Stage();
+        Stage viewCheckoutStage = new Stage();
         FXMLLoader fxmlLoader = new FXMLLoader(ViewCheckoutController.class.getResource("view_checkout.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 1000, 800);
         viewCheckoutStage.setTitle("View Checkout");
